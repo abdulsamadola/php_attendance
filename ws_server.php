@@ -44,7 +44,7 @@ function sendDataToApi($url, $data) {
 
 function sendJsonViaApi($json, $apiUrl) {
     // Send JSON to the API
-    $response = sendDataToApi($apiUrl, json_decode($json, true));
+    $response = sendDataToApi($apiUrl, $json);
 
     echo "API Response: " . $response . "\n";
 }
