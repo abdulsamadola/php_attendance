@@ -292,24 +292,37 @@ function onDeviceEvent($ws_conn, $xml)
 	}
 	else if ($event == "TimeLog_v2")
 	{
-		$time = extractTime($xml->Time);
-		$userid = $xml->UserID;
-		$logid = $xml->LogID;
-		$action = $xml->Action;
-		$attendstat = $xml->AttendStat;
-		$apstat = $xml->APStat;
-		$jobcode = $xml->JobCode;
-		$photo = $xml->Photo;
-		$latitude = $xml->Latitude;
-		$longitude = $xml->Longitude;
+		// ORIGINAL
+		// $time = extractTime($xml->Time);
+		// $userid = $xml->UserID;
+		// $logid = $xml->LogID;
+		// $action = $xml->Action;
+		// $attendstat = $xml->AttendStat;
+		// $apstat = $xml->APStat;
+		// $jobcode = $xml->JobCode;
+		// $photo = $xml->Photo;
+		// $latitude = $xml->Latitude;
+		// $longitude = $xml->Longitude;
 		$attend_only = ($xml->AttendOnly == "Yes");
 		$expired = ($xml->Expired == "Yes");
+		
+   // MODIFIED
+	$time = (string) extractTime($xml->Time);
+	$userid = (string) $xml->UserID;
+	$logid = (string) $xml->LogID;
+	$action = (string) $xml->Action;
+	$attendstat = (string) $xml->AttendStat;
+	$apstat = (string) $xml->APStat;
+	$jobcode = (string) $xml->JobCode;
+	$photo = (string) $xml->Photo;
+	$latitude = (string) $xml->Latitude;
+	$longitude = (string) $xml->Longitude;
 
 		$m->appendChild($retxml->createElement("TransID", $xml->TransID));
 		
 			// Create a JSON for API call
 			$json_data =  json_encode([
-				"TransID" => $xml->TransID,
+				"TransID" => (string) $xml->TransID,
 				"Time" => $time,
 				"UserID" => $userid,
 				"LogID" => $logid,
