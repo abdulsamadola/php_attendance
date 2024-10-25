@@ -307,6 +307,7 @@ function onDeviceEvent($ws_conn, $xml)
 		$expired = ($xml->Expired == "Yes");
 		
    // MODIFIED
+   $device_sn = (string) $xml->DeviceSerialNo;
 	$time = (string) extractTime($xml->Time);
 	$userid = (string) $xml->UserID;
 	$logid = (string) $xml->LogID;
@@ -323,6 +324,7 @@ function onDeviceEvent($ws_conn, $xml)
 			// Create a JSON for API call
 			$json_data =  json_encode([
 				"TransID" => (string) $xml->TransID,
+				"DeviceSerialNo" => $device_sn,
 				"Time" => $time,
 				"UserID" => $userid,
 				"LogID" => $logid,
