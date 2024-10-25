@@ -310,22 +310,28 @@ function onDeviceEvent($ws_conn, $xml)
 		$expired = ($xml->Expired == "Yes");
 
 		$m->appendChild($retxml->createElement("TransID", $xml->TransID));
-	}
-	else if ($event == "KeepAlive")
-	{
-		$time = extractTime($xml->DevTime);
-		$m->appendChild($retxml->createElement("DevTime", $xml->DevTime));
-		$m->appendChild($retxml->createElement("ServerTime", date("Y-m-d") . "-T" . date("H:i:s") . "Z"));
-	}
-	
-	$ev = new DevEvent($dev_sn, $event, $time, $logid, $userid, $adminid, $action, $attendstat, $apstat, $jobcode, $photo, $attend_only, $expired, $latitude, $longitude);
+		
+		// Create XML for API call
+	$sendxml = new DOMDocument("1.0");
+	$sendxml->formatOutput=true;
+	$modify = $sendxml->createElement('Message');
+		$modify->appendChild($sendxml->createElement("TransID", $xml->TransID));
+		$modify->appendChild($sendxml->createElement("Time", $time));
+		$modify->appendChild($sendxml->createElement("UserID", $userid));
+		$modify->appendChild($sendxml->createElement("LogID", $logid));
+		$modify->appendChild($sendxml->createElement("Action", $action));
+		$modify->appendChild($sendxml->createElement("AttendStat", $attendstat));
+		$modify->appendChild($sendxml->createElement("APStat", $apstat));
+		$modify->appendChild($sendxml->createElement("JobCode", $jobcode));
+		$modify->appendChild($sendxml->createElement("Photo", $photo));
+		$modify->appendChild($sendxml->createElement("Latitude", $latitude));
+		$modify->appendChild($sendxml->createElement("Longitude", $longitude));
+		$modify->appendChild($sendxml->createElement("AttendOnly", $attend_only));
+		$modify->appendChild($sendxml->createElement("Expired", $expired));
 
-	$m->appendChild($retxml->createElement("Result", "OK"));
-
-	$retdata = $retxml->saveXML();
+		 // Convert XML to SimpleXMLElement
+		 $returndata = $retxml->saveXML();
 	
-   // Convert XML to SimpleXMLElement
-	$xmlData = simplexml_load_string($retdata);
 
 	// Target statuses for API call
 	$targetStatuses = [
@@ -347,8 +353,22 @@ function onDeviceEvent($ws_conn, $xml)
 
 	// Check if <AttendStat> value matches any target status
 	// if (in_array((string)$xmlData->AttendStat, $targetStatuses)) {
-		convertXmlToJsonAndSend($retxml, 'https://api.logicglide.com/api/v1/logicexams/organization/staff_attendance/by_attendance_machine');
+		convertXmlToJsonAndSend($sendxml, 'https://api.logicglide.com/api/v1/logicexams/organization/staff_attendance/by_attendance_machine');
 	// }
+
+	}
+	else if ($event == "KeepAlive")
+	{
+		$time = extractTime($xml->DevTime);
+		$m->appendChild($retxml->createElement("DevTime", $xml->DevTime));
+		$m->appendChild($retxml->createElement("ServerTime", date("Y-m-d") . "-T" . date("H:i:s") . "Z"));
+	}
+	
+	$ev = new DevEvent($dev_sn, $event, $time, $logid, $userid, $adminid, $action, $attendstat, $apstat, $jobcode, $photo, $attend_only, $expired, $latitude, $longitude);
+
+	$m->appendChild($retxml->createElement("Result", "OK"));
+
+	$retdata = $retxml->saveXML();
 	WsConnection::sendData($ws_conn, $retdata);
 }
 
