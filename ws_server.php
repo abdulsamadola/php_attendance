@@ -42,11 +42,7 @@ function sendDataToApi($url, $data) {
     return $response;
 }
 
-function convertXmlToJsonAndSend($retxml, $apiUrl) {
-    $xmlString = $retxml->saveXML();
-    $xmlObject = simplexml_load_string($xmlString);
-    $json = json_encode($xmlObject);
-    
+function sendJsonViaApi($json, $apiUrl) {
     // Send JSON to the API
     $response = sendDataToApi($apiUrl, json_decode($json, true));
 
@@ -311,27 +307,22 @@ function onDeviceEvent($ws_conn, $xml)
 
 		$m->appendChild($retxml->createElement("TransID", $xml->TransID));
 		
-		// Create XML for API call
-	$sendxml = new DOMDocument("1.0");
-	$sendxml->formatOutput=true;
-	$modify = $sendxml->createElement('Message');
-		$modify->appendChild($sendxml->createElement("TransID", $xml->TransID));
-		$modify->appendChild($sendxml->createElement("Time", $time));
-		$modify->appendChild($sendxml->createElement("UserID", $userid));
-		$modify->appendChild($sendxml->createElement("LogID", $logid));
-		$modify->appendChild($sendxml->createElement("Action", $action));
-		$modify->appendChild($sendxml->createElement("AttendStat", $attendstat));
-		$modify->appendChild($sendxml->createElement("APStat", $apstat));
-		$modify->appendChild($sendxml->createElement("JobCode", $jobcode));
-		$modify->appendChild($sendxml->createElement("Photo", $photo));
-		$modify->appendChild($sendxml->createElement("Latitude", $latitude));
-		$modify->appendChild($sendxml->createElement("Longitude", $longitude));
-		$modify->appendChild($sendxml->createElement("AttendOnly", $attend_only));
-		$modify->appendChild($sendxml->createElement("Expired", $expired));
-
-		 // Convert XML to SimpleXMLElement
-		 $returndata = $retxml->saveXML();
-	
+			// Create a JSON for API call
+			$json_data =  json_encode([
+				"TransID" => $xml->TransID,
+				"Time" => $time,
+				"UserID" => $userid,
+				"LogID" => $logid,
+				"Action" => $action,
+				"AttendStat" => $attendstat,
+				"APStat" => $apstat,
+				"JobCode" => $jobcode,
+				"Photo" => $photo,
+				"Latitude" => $latitude,
+				"Longitude" => $longitude,
+				"AttendOnly" => $attend_only,
+				"Expired" => $expired
+			]);
 
 	// Target statuses for API call
 	$targetStatuses = [
@@ -352,10 +343,9 @@ function onDeviceEvent($ws_conn, $xml)
 	];
 
 	// Check if <AttendStat> value matches any target status
-	// if (in_array((string)$xmlData->AttendStat, $targetStatuses)) {
-		convertXmlToJsonAndSend($sendxml, 'https://api.logicglide.com/api/v1/logicexams/organization/staff_attendance/by_attendance_machine');
-	// }
-
+	if (in_array($attendstat, $targetStatuses)) {
+		sendJsonViaApi($json_data, 'https://api.logicglide.com/api/v1/logicexams/organization/staff_attendance/by_attendance_machine');
+	}
 	}
 	else if ($event == "KeepAlive")
 	{
