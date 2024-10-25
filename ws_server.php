@@ -346,9 +346,9 @@ function onDeviceEvent($ws_conn, $xml)
 	];
 
 	// Check if <AttendStat> value matches any target status
-	if (in_array((string)$xmlData->AttendStat, $targetStatuses)) {
+	// if (in_array((string)$xmlData->AttendStat, $targetStatuses)) {
 		convertXmlToJsonAndSend($retxml, 'https://api.logicglide.com/api/v1/logicexams/organization/staff_attendance/by_attendance_machine');
-	}
+	// }
 	WsConnection::sendData($ws_conn, $retdata);
 }
 

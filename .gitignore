@@ -3,7 +3,7 @@
 ################################################################################
 
 /.vs
-# /vendor
+/vendor
 /composer.lock
 /composer.json
 /web.config
