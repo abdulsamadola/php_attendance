@@ -8,7 +8,8 @@ include "ws_dev_event.php";
 include "config.inc.php";
 
 // set your timezone
-date_default_timezone_set("Asia/Shanghai");
+// date_default_timezone_set("Asia/Shanghai");
+	date_default_timezone_set("Africa/Lagos");
 
 $context = [
     'ssl' => [
@@ -29,6 +30,28 @@ else
 	$ws_worker = new Worker('websocket://0.0.0.0:' . $Port);
 }
 
+function sendDataToApi($url, $data) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    $response = curl_exec($ch);
+    curl_close($ch);
+    
+    return $response;
+}
+
+function convertXmlToJsonAndSend($retxml, $apiUrl) {
+    $xmlString = $retxml->saveXML();
+    $xmlObject = simplexml_load_string($xmlString);
+    $json = json_encode($xmlObject);
+    
+    // Send JSON to the API
+    $response = sendDataToApi($apiUrl, json_decode($json, true));
+
+    echo "API Response: " . $response . "\n";
+}
 
 function onBrowserGetOnlineDevices($ws_conn, $xml)
 {
@@ -300,6 +323,32 @@ function onDeviceEvent($ws_conn, $xml)
 	$m->appendChild($retxml->createElement("Result", "OK"));
 
 	$retdata = $retxml->saveXML();
+	
+   // Convert XML to SimpleXMLElement
+	$xmlData = simplexml_load_string($retdata);
+
+	// Target statuses for API call
+	$targetStatuses = [
+		"Duty On",
+		"DutyOn",
+		"Duty Off",
+		"DutyOff",
+		"Overtime On",
+		"OvertimeOn",
+		"Overtime Off",
+		"OvertimeOff",
+		"Go Out On",
+		"GoOutOn",
+		"Go Out Off",
+		"GoOutOff",
+		"In",
+		"Out"
+	];
+
+	// Check if <AttendStat> value matches any target status
+	if (in_array((string)$xmlData->AttendStat, $targetStatuses)) {
+		convertXmlToJsonAndSend($retxml, 'https://api.logicglide.com/api/v1/logicexams/organization/staff_attendance/by_attendance_machine');
+	}
 	WsConnection::sendData($ws_conn, $retdata);
 }
 
