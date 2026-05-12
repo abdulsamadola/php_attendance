@@ -237,6 +237,16 @@ function extractTime($str) {
 	$str = str_replace("Z", "", $str);
 	return $str;
 }
+
+/** Normalize device timestamp to ISO-8601 for JSON APIs (preserve Z / UTC). */
+function deviceTimeToIso8601ForApi($str) {
+	$s = trim((string) $str);
+	if ($s === '') {
+		return $s;
+	}
+	// Common device format: 2024-10-25-T14:30:00Z → 2024-10-25T14:30:00Z
+	return str_replace("-T", "T", $s);
+}
 function onDeviceEvent($ws_conn, $xml)
 {
 	$dev_sn = null;
@@ -309,6 +319,7 @@ function onDeviceEvent($ws_conn, $xml)
    // MODIFIED
    $device_sn = (string) $xml->DeviceSerialNo;
 	$time = (string) extractTime($xml->Time);
+	$timeForApi = deviceTimeToIso8601ForApi((string) $xml->Time);
 	$userid = (string) $xml->UserID;
 	$logid = (string) $xml->LogID;
 	$action = (string) $xml->Action;
@@ -325,7 +336,7 @@ function onDeviceEvent($ws_conn, $xml)
 			$json_data =  json_encode([
 				"TransID" => (string) $xml->TransID,
 				"DeviceSerialNo" => $device_sn,
-				"Time" => $time,
+				"Time" => $timeForApi !== '' ? $timeForApi : $time,
 				"UserID" => $userid,
 				"LogID" => $logid,
 				"Action" => $action,
