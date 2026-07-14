@@ -238,14 +238,35 @@ function extractTime($str) {
 	return $str;
 }
 
-/** Normalize device timestamp to ISO-8601 for JSON APIs (preserve Z / UTC). */
+/** Normalize device timestamp to ISO-8601 for JSON APIs (pad single-digit M/D/h/m/s; keep Z). */
 function deviceTimeToIso8601ForApi($str) {
 	$s = trim((string) $str);
 	if ($s === '') {
 		return $s;
 	}
-	// Common device format: 2024-10-25-T14:30:00Z → 2024-10-25T14:30:00Z
-	return str_replace("-T", "T", $s);
+	$s = str_replace("-T", "T", $s);
+	if (preg_match(
+		'/^(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{1,2}):(\d{1,2})(\.\d+)?(Z|[+-]\d{2}:\d{2}|[+-]\d{4})?$/i',
+		$s,
+		$m
+	)) {
+		$zone = isset($m[8]) ? $m[8] : '';
+		if ($zone !== '' && preg_match('/^[+-]\d{4}$/', $zone)) {
+			$zone = substr($zone, 0, 3) . ':' . substr($zone, 3);
+		}
+		return sprintf(
+			'%04d-%02d-%02dT%02d:%02d:%02d%s%s',
+			(int) $m[1],
+			(int) $m[2],
+			(int) $m[3],
+			(int) $m[4],
+			(int) $m[5],
+			(int) $m[6],
+			isset($m[7]) ? $m[7] : '',
+			$zone
+		);
+	}
+	return $s;
 }
 function onDeviceEvent($ws_conn, $xml)
 {
